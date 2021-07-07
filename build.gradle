@@ -1,0 +1,63 @@
+plugins {
+	id 'org.springframework.boot' version '2.1.4.RELEASE'
+	id 'java'
+	id 'jacoco'
+}
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'jacoco'
+
+group = 'io.codefresh'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+    useJUnit()
+
+    maxHeapSize = '1G'
+}
+
+jacoco {
+    toolVersion  "0.8.7"
+}
+
+task jacocoFullReport(type: JacocoReport, group: 'Coverage reports') {
+    group = 'Reporting'
+    description = 'Generates an aggregate report from all subprojects'
+
+    // Get list of projects which should be included in the report
+    def projects = new ArrayList()
+    subprojects.each { prj ->
+        if (!ignoredByJacoco.contains(prj.name)) {
+            projects.add(prj)
+        }
+    }
+
+    //noinspection GrUnresolvedAccess
+    dependsOn(projects.jacocoReport)
+
+    sourceDirectories.from file('src/main/java')
+    classDirectories.from  file('build/classes/java')
+    executionData.from file('build/jacoco/test.exec')
+    reports {
+        html {
+            required 
+            destination file('build/reports/jacoco/full')
+        }
+        xml {
+            required 
+            destination file('build/reports/jacoco/full/jacocoFullReport.xml')
+        }
+    }
+
+}
